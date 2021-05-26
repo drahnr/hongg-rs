@@ -1,7 +1,6 @@
 use anyhow::Result;
-use docopt::Docopt;
 use fs_err as fs;
-use serde::Deserialize;
+
 use std::env;
 use std::os::unix::process::CommandExt;
 use std::path::{Path, PathBuf};
@@ -264,7 +263,7 @@ Options:
 "#;
 
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, /*Deserialize,*/ Clone)]
 pub(crate) struct Args {
     flag_version: bool,
     flag_help: bool,
@@ -289,6 +288,7 @@ pub(crate) struct Args {
     arg_sub: Vec<String>,
 }
 
+/*
 impl Args {
     pub fn parse<S, I>(argv_iter: I) -> Result<Self, docopt::Error>
     where
@@ -382,6 +382,8 @@ impl Args {
         }
     }
 }
+*/
+
 
 #[derive(Debug, Copy, Clone)]
 enum Action {
@@ -393,7 +395,7 @@ enum Action {
 }
 
 fn main() -> Result<()> {
-    let args = Args::parse(env::args())?;
+    let args = Opt::from_args();
     pretty_env_logger::formatted_timed_builder()
         .filter_level(args.verbosity())
         .init();

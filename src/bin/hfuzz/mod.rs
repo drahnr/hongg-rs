@@ -1,3 +1,5 @@
+use anyhow::Result;
+
 use std::fs;
 use std::env;
 use std::process::{self, Command};
@@ -14,7 +16,7 @@ use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
 #[structopt(name = "cargo-hfuzz", about = "Fuzz your Rust code with Google-developed Honggfuzz !")]
-struct Opt {
+pub(crate) struct Opt {
     #[structopt(subcommand)]
     command: OptSub,
 }
@@ -135,7 +137,7 @@ pub(crate) fn debugger_command(target: &str, triple: &str) -> Command {
     cmd
 }
 
-fn hfuzz_version() {
+pub(crate) fn hfuzz_version() {
     println!("cargo-hfuzz {}", VERSION);
 }
 
@@ -211,7 +213,6 @@ fn hfuzz_build<T>(args: T, crate_root: &Path, build_type: &BuildType) where T: s
             .status() {
         Err(_) => false,
         Ok(status) => status.code().map(|code| code == 0).unwrap_or_default(),
-        }
     };
 
     let mut rustflags = "\
