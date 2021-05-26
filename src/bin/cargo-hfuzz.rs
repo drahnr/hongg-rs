@@ -7,6 +7,9 @@ use std::os::unix::process::CommandExt;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
+mod hfuzz;
+use self::hfuzz::*;
+
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 const HONGGFUZZ_TARGET: &str = "hfuzz_target";
 const HONGGFUZZ_WORKSPACE: &str = "hfuzz_workspace";
@@ -14,59 +17,6 @@ const HONGGFUZZ_WORKSPACE: &str = "hfuzz_workspace";
 #[cfg(target_family="windows")]
 compile_error!("honggfuzz-rs does not currently support Windows but works well under WSL (Windows Subsystem for Linux)");
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum BuildType {
-    ReleaseInstrumented,
-    ReleaseNotInstrumented,
-    ProfileWithGrcov,
-    Debug
-}
-
-
-#[inline(always)]
-fn target_triple() -> Result<String> {
-    Ok(rustc_version::version_meta()?.host)
-}
-
-fn find_crate_root() -> Result<PathBuf> {
-    let path = env::current_dir()
-        .map_err(|e| anyhow::anyhow!("Current directory is not set for process.").context(e))?;
-    let mut path = path.as_path();
-    while !path.join("Cargo.toml").is_file() {
-        // move to parent path
-        path = path
-            .parent()
-            .ok_or_else(|| anyhow::anyhow!("Reached root without finding Cargo.toml"))?;
-    }
-
-    Ok(path.to_path_buf())
-}
-
-fn debugger_command(target: &str, triple: &str) -> Command {
-    let debugger = env::var("HFUZZ_DEBUGGER").unwrap_or_else(|_| "rust-lldb".into());
-    let honggfuzz_target = env::var("CARGO_TARGET_DIR").unwrap_or_else(|_| HONGGFUZZ_TARGET.into());
-
-    let mut cmd = Command::new(&debugger);
-
-    let dest = format!("{}/{}/debug/{}", &honggfuzz_target, triple, target);
-    match Path::new(&debugger)
-        .file_name()
-        .map(|f| f.to_string_lossy().contains("lldb"))
-    {
-        Some(true) => {
-            cmd.args(&["-o", "b rust_panic", "-o", "r", "-o", "bt", "-f", &dest, "--"]);
-        }
-        _ => {
-            cmd.args(&["-ex", "b rust_panic", "-ex", "r", "-ex", "bt", "--args", &dest]);
-        }
-    };
-
-    cmd
-}
-
-fn hfuzz_version() {
-    println!("cargo-hfuzz {}", VERSION);
-}
 
 fn hfuzz_run(args: Args, crate_root: &Path, build_type: BuildType) -> Result<()> {
     let target = args
