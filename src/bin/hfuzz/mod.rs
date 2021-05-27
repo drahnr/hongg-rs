@@ -355,6 +355,18 @@ fn hfuzz_clean<T>(args: T) where T: std::iter::Iterator<Item=String> {
 pub fn main() {
     let opt = Opt::from_args();
     println!("{:?}", opt);
+
+    match opt.command {
+        OptSub::Fuzz { common_opts, input, target, no_instr, args } => {
+            todo!("fuzz");
+        },
+        OptSub::Debug { common_opts, debugger, target, crash_file, target_args } => {
+            todo!("debug");
+        },
+        OptSub::Clean => {
+            todo!("clean");
+        },
+    }
     return;
 
     let mut args = env::args().skip(1);
@@ -364,7 +376,7 @@ pub fn main() {
     }
 
     // change to crate root to have the same behavior as cargo build/run
-    let crate_root = find_crate_root().unwrap_or_else(|| {
+    let crate_root = find_crate_root().unwrap_or_else(|_| {
         eprintln!("error: could not find `Cargo.toml` in current directory or any parent directory");
         process::exit(1);
     });
