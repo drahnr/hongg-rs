@@ -36,6 +36,10 @@ struct CommonOpts {
     #[structopt(long, env = "HFUZZ_BUILD_ARGS")]
     build_args: Option<String>,
 
+    /// Pass --verbose to honggfuzz, enable various log levels.
+    #[structopt(short, long, parse(from_occurrences))]
+    verbose: u8,
+
     /// path to working directory
     #[structopt(short, long, default_value = "hfuzz_workspace", env = "HFUZZ_WORKSPACE")]
     workspace: String,
@@ -85,6 +89,30 @@ enum OptSub {
 
     /// Clean the saved fuzzing state and all related files.
     Clean,
+}
+
+impl Opt {
+    pub(crate) fn verbosity(&self) -> log::LevelFilter {
+        self.command.verbosity()
+    }
+}
+
+impl OptSub {
+    pub(crate) fn verbosity(&self) -> log::LevelFilter {
+        let verbose = match self {
+            OptSub::Fuzz { common_opts, ..} => common_opts.verbose,
+            OptSub::Debug { common_opts, ..} => common_opts.verbose,
+            OptSub::Clean => panic!("Subcommand 'clean` cannot be verbosive!"),
+        };
+        match verbose {
+            //_ if self.flag_quiet => log::LevelFilter::Off, TODO
+            2 => log::LevelFilter::Warn,
+            3 => log::LevelFilter::Info,
+            4 => log::LevelFilter::Debug,
+            n if n > 4 => log::LevelFilter::Trace,
+            _ => log::LevelFilter::Error,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

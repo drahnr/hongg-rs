@@ -1,5 +1,6 @@
 use anyhow::Result;
 use fs_err as fs;
+use structopt::StructOpt;
 
 use std::env;
 use std::os::unix::process::CommandExt;
