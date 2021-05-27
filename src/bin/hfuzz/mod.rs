@@ -102,7 +102,7 @@ impl OptSub {
         let verbose = match self {
             OptSub::Fuzz { common_opts, ..} => common_opts.verbose,
             OptSub::Debug { common_opts, ..} => common_opts.verbose,
-            OptSub::Clean => panic!("Subcommand 'clean` cannot be verbosive!"),
+            OptSub::Clean => 0,
         };
         match verbose {
             //_ if self.flag_quiet => log::LevelFilter::Off, TODO
@@ -125,8 +125,8 @@ pub(crate) enum BuildType {
 
 
 #[inline(always)]
-pub(crate) fn target_triple() -> Result<String> {
-    Ok(rustc_version::version_meta()?.host)
+pub(crate) fn target_triple() -> String {
+    rustc_version::version_meta().expect("RUSTC version data is available. qed").host
 }
 
 pub(crate) fn find_crate_root() -> Result<PathBuf> {
@@ -188,7 +188,7 @@ fn hfuzz_run<T>(mut args: T, crate_root: &Path, build_type: &BuildType) where T:
                 process::exit(1);
             });
 
-            let status = debugger_command(&target)
+            let status = debugger_command(&target, &target_triple())
                 .args(args)
                 .env("CARGO_HONGGFUZZ_CRASH_FILENAME", crash_filename)
                 .env("RUST_BACKTRACE", env::var("RUST_BACKTRACE").unwrap_or_else(|_| "1".into()))
@@ -369,6 +369,7 @@ pub fn main() {
     }
     return;
 
+    /*
     let mut args = env::args().skip(1);
     if args.next() != Some("hfuzz".to_string()) {
         eprintln!("please launch as a cargo subcommand: \"cargo hfuzz ...\"");
@@ -416,4 +417,5 @@ pub fn main() {
             process::exit(1);
         }
     }
+    */
 }

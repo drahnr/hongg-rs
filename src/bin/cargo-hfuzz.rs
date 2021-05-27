@@ -35,7 +35,7 @@ fn hfuzz_run(args: Args, crate_root: &Path, build_type: BuildType) -> Result<()>
         hfuzz_build(args, crate_root, build_type)?;
     }
 
-    let triple = target_triple()?;
+    let triple = target_triple();
     match build_type {
         BuildType::Debug => {
             let crash_filename = args
@@ -186,7 +186,7 @@ fn hfuzz_build(args: Args, crate_root: &Path, build_type: BuildType) -> Result<(
     let cargo_bin = env::var("CARGO").unwrap();
     let mut command = Command::new(&cargo_bin);
     // HACK to avoid building build scripts with rustflags
-    let mut arguments = vec!["build".to_owned(), "--target".to_owned(), target_triple()?];
+    let mut arguments = vec!["build".to_owned(), "--target".to_owned(), target_triple()];
     arguments.extend(hfuzz_build_args.map(ToString::to_string));
     arguments.extend(args.arg_sub.iter().map(ToString::to_string));
 
@@ -407,6 +407,7 @@ fn main() -> Result<()> {
     })?;
     env::set_current_dir(&crate_root).unwrap();
 
+    /*
     match args.action() {
         Action::Build(ty) => hfuzz_build(args, &crate_root, ty)?,
         Action::Run(ty) => hfuzz_run(args, &crate_root, ty)?,
@@ -414,6 +415,7 @@ fn main() -> Result<()> {
         Action::Version => hfuzz_version(),
         Action::Help => println!("{}", USAGE),
     };
+    */
     Ok(())
 }
 
