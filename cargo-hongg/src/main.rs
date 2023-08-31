@@ -17,7 +17,7 @@ compile_error!("honggfuzz-rs does not currently support Windows but works well u
 #[clap(
     name = "cargo-hongg",
     about = "Fuzz your Rust code with Google-developed Honggfuzz !",
-    author, 
+    author
 )]
 struct Opt {
     #[clap(subcommand)]
@@ -118,9 +118,10 @@ enum SubCommand {
 impl SubCommand {
     pub fn verbosity(&self) -> log::LevelFilter {
         match self {
-            Self::Clean { .. } | Self::Minimize => 
-            log::LevelFilter::Trace,
-            Self::Debug { common, .. } | Self::Fuzz { common, ..} => common.verbosity.log_level_filter(),
+            Self::Clean { .. } | Self::Minimize => log::LevelFilter::Trace,
+            Self::Debug { common, .. } | Self::Fuzz { common, .. } => {
+                common.verbosity.log_level_filter()
+            }
         }
     }
 }
@@ -382,15 +383,16 @@ fn hfuzz_run(
     // FIXME: we split by whitespace without respecting escaping or quotes
     let hfuzz_build_args = Vec::from_iter(hfuzz_build_args.split_whitespace());
 
-    let hfuzz_build_profile =
-        if let Some(arg) = hfuzz_build_args.iter().find(|&&f| f.starts_with("--profile=")) {
-            arg.split("=")
-                .nth(1)
-                .expect("--profile not in correct format (eg. --profile=<label>)")
-        } else {
-            "release"
-        };
-
+    let hfuzz_build_profile = if let Some(arg) = hfuzz_build_args
+        .iter()
+        .find(|&&f| f.starts_with("--profile="))
+    {
+        arg.split("=")
+            .nth(1)
+            .expect("--profile not in correct format (eg. --profile=<label>)")
+    } else {
+        "release"
+    };
 
     fs::create_dir_all(&format!("{}/{}/input", &workspace, binary.to_string()))?;
 
@@ -430,7 +432,10 @@ fn hfuzz_run(
     arguments.extend(
         [
             "--",
-            &format!("{}/{}/{}/{}", &target_dir, target_triple, hfuzz_build_profile, &binary),
+            &format!(
+                "{}/{}/{}/{}",
+                &target_dir, target_triple, hfuzz_build_profile, &binary
+            ),
         ]
         .iter()
         .map(ToString::to_string),
@@ -504,13 +509,17 @@ fn hfuzz_build(
                 // for which the LLVM version is >= 13.
                 let version_meta = rustc_version::version_meta().unwrap();
                 if version_meta.llvm_version.map_or(true, |v| v.major >= 13) {
-                    rustflags.push_str("\
+                    rustflags.push_str(
+                        "\
                     -C passes=sancov-module \
-                    ");
+                    ",
+                    );
                 } else {
-                    rustflags.push_str("\
+                    rustflags.push_str(
+                        "\
                     -C passes=sancov \
-                    ");
+                    ",
+                    );
                 };
 
                 rustflags.push_str(
