@@ -452,6 +452,10 @@ fn hfuzz_build(
             .env("CARGO_HONGGFUZZ_TARGET_DIR", &target_dir);
     }
     else if build_type != BuildType::Debug {
+        if !hfuzz_build_args.any(|f| f.starts_with("--profile")) {
+            command.arg("--release");
+        }
+
         command
             .env("CARGO_HONGGFUZZ_BUILD_VERSION", VERSION)
             .env("CARGO_HONGGFUZZ_TARGET_DIR", &target_dir);
