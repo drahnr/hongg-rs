@@ -24,15 +24,15 @@ Fuzz your Rust code with Google-developped Honggfuzz! Alt implementation of `car
 [dependencies]
 arbitrary = "1.0"
 rustc_version = "0.4"
-structopt = "0.3"
+clap = { version = "4", features = ["derive", "color", "env"] }
 serde = "1.0"
 anyhow = "1.0"
 fs-err = "2.5"
 which = "4.1"
 log = "0.4"
 pretty_env_logger = "0.5"
-clap-verbosity-flag = "0.3"
-clap-cargo = "0.4"
+clap-verbosity-flag = "2"
+clap-cargo = "0.11"
 
 [dev-dependencies]
 rand = "0.8"

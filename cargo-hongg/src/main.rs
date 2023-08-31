@@ -5,7 +5,6 @@ use std::os::unix::process::CommandExt;
 use std::path::{Path, PathBuf};
 use std::process::{self, Command};
 use std::time::Duration;
-use structopt::StructOpt;
 
 /// The version of `cargo-hongg` cli tooling.
 const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -14,13 +13,14 @@ const HONGGFUZZ_TARGET: &str = "hfuzz_target";
 #[cfg(target_family = "windows")]
 compile_error!("honggfuzz-rs does not currently support Windows but works well under WSL (Windows Subsystem for Linux)");
 
-#[derive(Debug, StructOpt)]
-#[structopt(
+#[derive(Debug, clap::Parser)]
+#[clap(
     name = "cargo-hongg",
-    about = "Fuzz your Rust code with Google-developed Honggfuzz !"
+    about = "Fuzz your Rust code with Google-developed Honggfuzz !",
+    author, 
 )]
 struct Opt {
-    #[structopt(subcommand)]
+    #[clap(subcommand)]
     command: SubCommand,
 }
 
@@ -30,22 +30,22 @@ impl Opt {
     }
 }
 /// Shared options for multiple sub-commands.
-#[derive(Debug, StructOpt)]
+#[derive(Debug, clap::Parser)]
 struct CommonOpts {
     /// only build binary but don't execute it
-    #[structopt(long)]
+    #[clap(long)]
     only_build: bool,
 
     /// flags given to `rustc`, for example "-Z sanitizer=address"
-    #[structopt(long, env = "RUSTFLAGS")]
+    #[clap(long, env = "RUSTFLAGS")]
     rustflags: Option<String>,
 
     /// args given to `cargo build`
-    #[structopt(long, env = "HFUZZ_BUILD_ARGS")]
+    #[clap(long, env = "HFUZZ_BUILD_ARGS")]
     build_args: Option<String>,
 
-    /// path to working directory
-    #[structopt(
+    /// path to working directory for storing all relevant fuzz data
+    #[clap(
         short,
         long,
         default_value = "hfuzz_workspace",
@@ -53,34 +53,34 @@ struct CommonOpts {
     )]
     workspace: String,
 
-    #[structopt(flatten)]
+    #[clap(flatten)]
     verbosity: clap_verbosity_flag::Verbosity,
 }
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, clap::Subcommand)]
 enum SubCommand {
     /// build and run fuzzing
     Fuzz {
-        #[structopt(flatten)]
+        #[clap(flatten)]
         common: CommonOpts,
 
         /// path to fuzzer's input files (aka "corpus"), relative to `$HFUZZ_WORKSPACE/{TARGET}`
-        #[structopt(short, long, env = "HFUZZ_INPUT")]
+        #[clap(short, long, env = "HFUZZ_INPUT")]
         input: Option<String>,
 
         /// which fuzzing target binary to fuzz
-        #[structopt(short = "b", long = "bin")]
+        #[clap(short = 'b', long = "bin")]
         binary: String,
 
         /// do no build with compiler instrumentation
-        #[structopt(long)]
+        #[clap(long)]
         no_instr: bool,
 
         /// use grcov coverage information
-        #[structopt(long)]
+        #[clap(long)]
         grcov: bool,
 
-        #[structopt(flatten)]
+        #[clap(flatten)]
         launch: HonggfuzzLaunchArgs,
 
         /// args to the binary, followed by an optional `--` which are interpreted by the fuzzer itself
@@ -90,19 +90,19 @@ enum SubCommand {
 
     /// Debug
     Debug {
-        #[structopt(flatten)]
+        #[clap(flatten)]
         common: CommonOpts,
 
         /// name or path to debugger, like `rust-gdb`, `gdb`, `/usr/bin/lldb-7`..
-        #[structopt(short, long, default_value = "rust-lldb", env = "HFUZZ_DEBUGGER")]
+        #[clap(short, long, default_value = "rust-lldb", env = "HFUZZ_DEBUGGER")]
         debugger: String,
 
         /// which binary target to fuzz
-        #[structopt(short, long)]
+        #[clap(short, long)]
         binary: String,
 
         /// path to crash file, typically like `hfuzz_workspace/[TARGET]/[..].fuzz`
-        #[structopt(short, long)]
+        #[clap(short, long)]
         crash_file: PathBuf,
 
         /// args to target
@@ -117,7 +117,11 @@ enum SubCommand {
 
 impl SubCommand {
     pub fn verbosity(&self) -> log::LevelFilter {
-        log::LevelFilter::Trace
+        match self {
+            Self::Clean { .. } | Self::Minimize => 
+            log::LevelFilter::Trace,
+            Self::Debug { common, .. } | Self::Fuzz { common, ..} => common.verbosity.log_level_filter(),
+        }
     }
 }
 
@@ -257,18 +261,18 @@ impl TimeoutDuration {
     }
 }
 
-#[derive(Debug, Clone, Default, StructOpt)]
+#[derive(Debug, Clone, Default, clap::Parser)]
 struct HonggfuzzLaunchArgs {
-    #[structopt(long)]
+    #[clap(long)]
     timeout: Option<TimeoutDuration>,
 
-    #[structopt(long)]
+    #[clap(long)]
     exit_upon_crash: Option<u32>,
 
-    #[structopt(long)]
+    #[clap(long)]
     n_iterations: Option<u64>,
 
-    #[structopt(long)]
+    #[clap(long)]
     quietly: bool,
 }
 
@@ -610,7 +614,7 @@ fn hfuzz_clean(args: impl IntoIterator<Item = impl ToString>, target_dir: &str) 
 }
 
 fn main() -> Result<()> {
-    let opt = Opt::from_args();
+    let opt = <Opt as clap::Parser>::parse();
     pretty_env_logger::formatted_timed_builder()
         .filter_level(opt.verbosity())
         .init();
@@ -631,11 +635,12 @@ fn main() -> Result<()> {
 mod tests {
     use super::*;
     use assert_matches::assert_matches;
+    use clap::Parser;
 
     #[test]
     fn args() {
         fn check(cl: &'static str) -> Opt {
-            let args = Opt::from_iter(cl.split_ascii_whitespace());
+            let args = Opt::parse_from(cl.split_ascii_whitespace());
             args
         }
 

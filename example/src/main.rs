@@ -1,4 +1,4 @@
-use honggfuzz::fuzz;
+use hongg::fuzz;
 
 fn main() {
     // Here you can parse `std::env::args and 

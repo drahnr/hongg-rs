@@ -49,7 +49,7 @@
 //! Create a target to fuzz
 //!
 //! ```rust,should_panic
-//! use honggfuzz::fuzz;
+//! use hongg::fuzz;
 //!
 //! fn main() {
 //!     // Here you can parse `std::env::args and
@@ -223,7 +223,7 @@ extern "C" {
 /// [`std::panic::UnwindSafe`] trait.
 ///
 /// ```rust,should_panic
-/// # use honggfuzz::fuzz;
+/// # use hongg::fuzz;
 /// # fn main() {
 /// loop {
 ///     fuzz(|data|{
@@ -340,7 +340,7 @@ where
 /// For perstistent fuzzing to work, you have to call it ad vita aeternam in an infinite loop.
 ///
 /// ```rust,should_panic
-/// # use honggfuzz::fuzz;
+/// # use hongg::fuzz;
 /// # fn main() {
 /// loop {
 ///     fuzz!(|data: &[u8]| {
