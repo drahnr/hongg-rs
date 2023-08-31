@@ -305,7 +305,7 @@ where
     F: FnOnce(&[u8]),
 {
     use fs_err::File;
-    use memmap::MmapOptions;
+    use memmap2::MmapOptions;
     use std::env;
 
     let filename = env::var("CARGO_HONGGFUZZ_CRASH_FILENAME").unwrap_or_else(|_|{
