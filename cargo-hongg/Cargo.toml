@@ -1,11 +1,11 @@
 [package]
 name = "cargo-hongg"
-version = "0.54.4"
+version = "0.55.5"
 authors = [
   "Bernhard Schuster <bernhard@ahoi.io>",
   "Paul Grandperrin <paul.grandperrin@gmail.com>",
 ]
-edition = "2018"
+edition = "2021"
 repository = "https://github.com/drahnr/honggfuzz-rs"
 documentation = "https://docs.rs/cargo-hongg"
 homepage = "https://github.com/drahnr/honggfuzz-rs/blob/master/README.md"
@@ -30,7 +30,7 @@ anyhow = "1.0"
 fs-err = "2.5"
 which = "4.1"
 log = "0.4"
-pretty_env_logger = "0.4"
+pretty_env_logger = "0.5"
 clap-verbosity-flag = "0.3"
 clap-cargo = "0.4"
 
