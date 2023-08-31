@@ -6,6 +6,7 @@ authors = [
   "Paul Grandperrin <paul.grandperrin@gmail.com>",
 ]
 edition = "2021"
+license = "MIT OR Apache-2.0"
 repository = "https://github.com/drahnr/honggfuzz-rs"
 documentation = "https://docs.rs/cargo-hongg"
 homepage = "https://github.com/drahnr/honggfuzz-rs/blob/master/README.md"
