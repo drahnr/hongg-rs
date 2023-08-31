@@ -496,9 +496,21 @@ fn hfuzz_build(
             );
 
             if build_type == BuildType::ReleaseInstrumented {
+                // The fix for now is to pass `-C passes=sancov-module` only to compilers
+                // for which the LLVM version is >= 13.
+                let version_meta = rustc_version::version_meta().unwrap();
+                if version_meta.llvm_version.map_or(true, |v| v.major >= 13) {
+                    rustflags.push_str("\
+                    -C passes=sancov-module \
+                    ");
+                } else {
+                    rustflags.push_str("\
+                    -C passes=sancov \
+                    ");
+                };
+
                 rustflags.push_str(
                     "\
-                -C passes=sancov \
                 -C llvm-args=-sanitizer-coverage-level=4 \
                 -C llvm-args=-sanitizer-coverage-trace-pc-guard \
                 -C llvm-args=-sanitizer-coverage-trace-divs \
@@ -531,7 +543,7 @@ fn hfuzz_build(
     log::debug!("HFUZZ_BUILD_ARGS: {}", hfuzz_build_args);
 
     // FIXME: we split by whitespace without respecting escaping or quotes
-    let hfuzz_build_args = hfuzz_build_args.split_whitespace();
+    let hfuzz_build_args = Vec::from_iter(hfuzz_build_args.split_whitespace());
 
     let cargo_bin = cargo_bin()?;
     let mut command = Command::new(&cargo_bin);
@@ -543,7 +555,7 @@ fn hfuzz_build(
         "--target".to_owned(),
         target_triple()?,
     ];
-    arguments.extend(hfuzz_build_args.map(|x| x.to_string()));
+    arguments.extend(hfuzz_build_args.iter().map(|x| x.to_string()));
     arguments.extend(args.into_iter().map(|x| x.to_string()));
 
     log::debug!("Spawn: {} {}", &cargo_bin, arguments.join(" "));
@@ -562,7 +574,7 @@ fn hfuzz_build(
             .env("CARGO_HONGGFUZZ_BUILD_VERSION", VERSION)
             .env("CARGO_HONGGFUZZ_TARGET_DIR", &target_dir);
     } else if build_type != BuildType::Debug {
-        if !hfuzz_build_args.any(|f| f.starts_with("--profile")) {
+        if !hfuzz_build_args.iter().any(|f| f.starts_with("--profile")) {
             command.arg("--release");
         }
 
