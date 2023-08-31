@@ -1,6 +1,6 @@
 [package]
 name = "cargo-hongg"
-version = "0.55.5"
+version = "0.55.6"
 authors = [
   "Bernhard Schuster <bernhard@ahoi.io>",
   "Paul Grandperrin <paul.grandperrin@gmail.com>",
