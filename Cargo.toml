@@ -3,8 +3,8 @@ members = ["hongg", "cargo-hongg"]
 
 
 exclude = [
-	"/honggfuzz/examples/**",
-	"/honggfuzz/hfuzz_cc/**",
-	"/honggfuzz/**/*.png",
-	"/honggfuzz/includes/**",
+  "/honggfuzz/examples/**",
+  "/honggfuzz/hfuzz_cc/**",
+  "/honggfuzz/**/*.png",
+  "/honggfuzz/includes/**",
 ]
