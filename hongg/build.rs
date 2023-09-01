@@ -1,38 +1,19 @@
 use std::env;
 use std::path::PathBuf;
+use std::process::Command;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[cfg(target_family = "windows")]
 compile_error!("honggfuzz-rs does not currently support Windows but works well under WSL (Windows Subsystem for Linux)");
 
-// TODO: maybe use `make-cmd` crate
-#[cfg(not(any(
-    target_os = "freebsd",
-    target_os = "dragonfly",
-    target_os = "bitrig",
-    target_os = "openbsd",
-    target_os = "netbsd"
-)))]
-const GNU_MAKE: &str = "make";
-#[cfg(any(
-    target_os = "freebsd",
-    target_os = "dragonfly",
-    target_os = "bitrig",
-    target_os = "openbsd",
-    target_os = "netbsd"
-))]
-const GNU_MAKE: &str = "gmake";
 
 #[track_caller]
-fn run_cmd(cmd: impl std::convert::AsRef<str>) {
-    let full = cmd.as_ref();
-    let mut iter = full.split_whitespace();
-    let cmd = iter.next().expect("Command is never empty. qed");
-    let status = ::std::process::Command::new(cmd)
-        .args(iter)
-        .status()
-        .expect(format!("Failed to spawn process \"{}\"", &full).as_str());
+fn run_cmd(cmd: &mut Command) {
+    let full = Vec::from_iter(std::iter::once(cmd.get_program()).chain(cmd.get_args()).map(|x| x.to_string_lossy().to_string())).join(" ");
+    let status = 
+        cmd.status()
+        .expect(format!("Failed to spawn process \"{full}\"").as_str());
 
     assert!(
         status.success(),
@@ -42,22 +23,18 @@ fn run_cmd(cmd: impl std::convert::AsRef<str>) {
     );
 }
 
-macro_rules! run_cmd {
-    ($fmtcmd:expr $(, $args:expr )* $(,)? ) => {
-        let full: String = format!($fmtcmd $(, $args )*);
-        run_cmd(full);
-    };
-}
-
 fn main() {
+    let mut make = make_cmd::gnu_make();
+    let cwd = dbg!(std::env::current_dir().unwrap());
+    
     // Only build honggfuzz binaries if we are in the process of building an instrumentized binary
     let honggfuzz_target = match env::var("CARGO_HONGGFUZZ_TARGET_DIR") {
         Ok(path) => PathBuf::from(path), // path where to place honggfuzz binary. provided by cargo-hfuzz command.
         Err(_) => return,
     };
 
-    let out_dir = env::var("OUT_DIR").unwrap(); // from cargo
-    let crate_root = env::var("CRATE_ROOT").unwrap(); //from honggfuzz
+    let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap()); // from cargo
+    let crate_root = PathBuf::from(env::var("CRATE_ROOT").unwrap()); //from honggfuzz
 
     let honggfuzz_target = if honggfuzz_target.is_absolute() {
         // in case CARGO_HONGGFUZZ_TARGET_DIR was initialized
@@ -65,7 +42,7 @@ fn main() {
         // prepend the crate root again
         honggfuzz_target
     } else {
-        PathBuf::from(crate_root).join(honggfuzz_target)
+        crate_root.join(honggfuzz_target)
     };
 
     // check that "cargo hongg" command is at the same version as this file
@@ -80,26 +57,26 @@ fn main() {
         std::process::exit(1);
     }
 
+    let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").unwrap();
+    let manifest_dir = manifest_dir.as_str();
+    
     // clean upsteam honggfuzz directory
-    run_cmd!("{} -C honggfuzz clean", GNU_MAKE);
+    run_cmd(make.args(format!("-C {manifest_dir}/honggfuzz clean").split_ascii_whitespace()).current_dir(manifest_dir));
     // TODO: maybe it's not a good idea to always clean the sources..
 
     // build honggfuzz command and hfuzz static library
-    run_cmd!(
-        "{} -C honggfuzz honggfuzz libhfuzz/libhfuzz.a libhfcommon/libhfcommon.a",
-        GNU_MAKE
-    );
+    run_cmd(make.args(format!("-C {manifest_dir}/honggfuzz honggfuzz libhfuzz/libhfuzz.a libhfcommon/libhfcommon.a").split_ascii_whitespace()).current_dir(cwd.parent().unwrap()));
 
-    // copy hfuzz static library to output directory
-    run_cmd!("cp honggfuzz/libhfuzz/libhfuzz.a {}", &out_dir);
-
-    run_cmd!("cp honggfuzz/libhfcommon/libhfcommon.a {}", &out_dir);
-
+    use fs_err as fs;
+    
+    fs::copy(format!("{manifest_dir}/honggfuzz/libhfuzz/libhfuzz.a"), out_dir.join("libhfuzz.a")).unwrap();
+    fs::copy(format!("{manifest_dir}/honggfuzz/libhfcommon/libhfcommon.a"), out_dir.join("libhfcommon.a")).unwrap();
+    
     // copy honggfuzz executable to honggfuzz target directory
-    run_cmd!("cp honggfuzz/honggfuzz {}", honggfuzz_target.display());
+    fs::copy(format!("{manifest_dir}/honggfuzz/honggfuzz"), honggfuzz_target.join("honggfuzz")).unwrap();
 
     // tell cargo how to link final executable to hfuzz static library
     println!("cargo:rustc-link-lib=static={}", "hfuzz");
     println!("cargo:rustc-link-lib=static={}", "hfcommon");
-    println!("cargo:rustc-link-search=native={}", &out_dir);
+    println!("cargo:rustc-link-search=native={}", out_dir.display());
 }

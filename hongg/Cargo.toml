@@ -1,7 +1,7 @@
 [package]
 name = "hongg"
 version = "0.55.6"
-edition = "2018"
+edition = "2021"
 authors = ["Paul Grandperrin <paul.grandperrin@gmail.com>"]
 license = "MIT OR Apache-2.0 OR Unlicense OR WTFPL"
 repository = "https://github.com/rust-fuzz/honggfuzz-rs"
@@ -20,6 +20,10 @@ Fuzz your Rust code with Google-developped Honggfuzz !
 """
 publish = false
 
+
+[build-dependencies]
+fs-err = "2"
+make-cmd = "0.1"
 
 [dependencies]
 arbitrary = "1.0"
