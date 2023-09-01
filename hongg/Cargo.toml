@@ -1,6 +1,6 @@
 [package]
 name = "hongg"
-version = "0.55.6"
+version = "0.55.7"
 edition = "2021"
 authors = ["Paul Grandperrin <paul.grandperrin@gmail.com>"]
 license = "MIT OR Apache-2.0 OR Unlicense OR WTFPL"
