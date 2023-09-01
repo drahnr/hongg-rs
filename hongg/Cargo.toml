@@ -19,15 +19,16 @@ description = """
 Fuzz your Rust code with Google-developped Honggfuzz !
 """
 exclude = [
-	"honggfuzz/examples/**",
-	"honggfuzz/hfuzz_cc/**",
-	"honggfuzz/**/*.png",
-	"honggfuzz/includes/**",
+  "honggfuzz/examples/*",
+  "honggfuzz/hfuzz_cc/*",
+  "honggfuzz/**/*.png",
+  "honggfuzz/includes/*",
 ]
 
 [build-dependencies]
 fs-err = "2"
 make-cmd = "0.1"
+anyhow = "1"
 
 [dependencies]
 arbitrary = "1.0"
