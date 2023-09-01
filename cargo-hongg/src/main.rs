@@ -593,6 +593,8 @@ fn hfuzz_build(
             .env("CARGO_HONGGFUZZ_TARGET_DIR", &target_dir);
     }
     
+    command.args(args.into_iter().map(|x| x.to_string()));  
+    
     log::debug!("Spawn: {} {}", command.get_program().to_string_lossy(), Vec::from_iter(command.get_args().map(|x| x.to_string_lossy().to_owned())).as_slice().join(" "));
 
     

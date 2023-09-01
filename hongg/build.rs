@@ -25,7 +25,7 @@ fn run_cmd(cmd: &mut Command) {
 
 fn main() {
     let mut make = make_cmd::gnu_make();
-    let cwd = dbg!(std::env::current_dir().unwrap());
+    let cwd = std::env::current_dir().unwrap();
     
     // Only build honggfuzz binaries if we are in the process of building an instrumentized binary
     let honggfuzz_target = match env::var("CARGO_HONGGFUZZ_TARGET_DIR") {
