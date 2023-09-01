@@ -18,7 +18,6 @@ categories = [
 description = """
 Fuzz your Rust code with Google-developped Honggfuzz !
 """
-publish = false
 
 
 [build-dependencies]
