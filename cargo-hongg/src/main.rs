@@ -560,19 +560,16 @@ fn hfuzz_build(
 
     let cargo_bin = cargo_bin()?;
     let mut command = Command::new(&cargo_bin);
+    
+    command.args(hfuzz_build_args.iter().map(|x| x.to_string()));
+    
     // HACK to avoid building build scripts with rustflags
-    let mut arguments = vec![
-        "build".to_owned(),
-        "--bin".to_owned(),
-        binary.to_string(),
-        "--target".to_owned(),
-        target_triple()?,
-    ];
-    arguments.extend(hfuzz_build_args.iter().map(|x| x.to_string()));
-    arguments.extend(args.into_iter().map(|x| x.to_string()));
-
-    log::debug!("Spawn: {} {}", &cargo_bin, arguments.join(" "));
-
+    command.arg("build");
+    command.arg("--bin");
+    command.arg(binary);
+    command.arg("--target");
+    command.arg(target_triple()?);
+    
     command
         .env("RUSTFLAGS", rustflags)
         .env("CARGO_INCREMENTAL", cargo_incremental)
@@ -594,10 +591,12 @@ fn hfuzz_build(
         command
             .env("CARGO_HONGGFUZZ_BUILD_VERSION", VERSION)
             .env("CARGO_HONGGFUZZ_TARGET_DIR", &target_dir);
-        arguments.push("--release".to_owned());
     }
+    
+    log::debug!("Spawn: {} {}", command.get_program().to_string_lossy(), Vec::from_iter(command.get_args().map(|x| x.to_string_lossy().to_owned())).as_slice().join(" "));
 
-    let status = command.args(arguments).status()?;
+    
+    let status = command.status()?;
     if !status.success() {
         anyhow::bail!("Execution failed with status code {:?}", status.code());
     }
