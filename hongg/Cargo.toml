@@ -18,7 +18,19 @@ categories = [
 description = """
 Fuzz your Rust code with Google-developped Honggfuzz !
 """
-
+exclude = [
+  #symbolic links
+  "hongg/honggfuzz/hfuzz_cc/*",
+  "hongg/honggfuzz/docs/*",
+  "hongg/honggfuzz/examples/*",
+  "hongg/honggfuzz/tools/*",
+]
+include = [
+    "**/*.rs",
+    "Cargo.toml",
+    "Cargo.lock",
+    "hongg/honggfuzz/hfuzz_cc/hfuzz-cc.c",
+]
 
 [build-dependencies]
 fs-err = "2"
