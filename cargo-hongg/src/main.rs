@@ -622,7 +622,21 @@ fn hfuzz_clean(args: impl IntoIterator<Item = impl ToString>, target_dir: &str) 
 }
 
 fn main() -> Result<()> {
-    let opt = <Opt as clap::Parser>::parse();
+    let args = {
+        let mut raw = std::env::args();
+        let mut args = Vec::with_capacity(raw.len());
+        if let Some(first) = dbg!(raw.next()) {
+            args.push(first);
+            if let Some(second) = dbg!(raw.next()) {
+                if second != "hongg" {
+                    args.push(second);
+                }
+            }
+        }
+        args.extend(raw);
+        args
+    };
+    let opt = <Opt as clap::Parser>::parse_from(args);
     pretty_env_logger::formatted_timed_builder()
         .filter_level(opt.verbosity())
         .init();
