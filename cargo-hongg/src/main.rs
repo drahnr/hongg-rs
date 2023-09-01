@@ -632,11 +632,11 @@ fn main() -> Result<()> {
     let args = {
         let mut raw = std::env::args();
         let mut args = Vec::with_capacity(raw.len());
-        if let Some(first) = dbg!(raw.next()) {
-            args.push(first);
-            if let Some(second) = dbg!(raw.next()) {
-                if second != "hongg" {
-                    args.push(second);
+        if let Some(binary) = raw.next() {
+            args.push(binary);
+            if let Some(first) = raw.next() {
+                if first != "hongg" {
+                    args.push(first);
                 }
             }
         }
