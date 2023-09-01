@@ -14,10 +14,11 @@ const HONGGFUZZ_TARGET: &str = "hfuzz_target";
 compile_error!("honggfuzz-rs does not currently support Windows but works well under WSL (Windows Subsystem for Linux)");
 
 #[derive(Debug, clap::Parser)]
-#[clap(
+#[command(
     name = "cargo-hongg",
-    about = "Fuzz your Rust code with Google-developed Honggfuzz !",
-    author
+    author,
+    version,
+    about = "Fuzz your Rust code with Google-developed Honggfuzz !"
 )]
 struct Opt {
     #[clap(subcommand)]

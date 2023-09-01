@@ -27,7 +27,6 @@ fn run_cmd(cmd: &mut Command) -> anyhow::Result<()> {
 
 fn main() -> anyhow::Result<()> {
     let mut make = make_cmd::gnu_make();
-    let cwd = std::env::current_dir()?;
 
     // Only build honggfuzz binaries if we are in the process of building an instrumentized binary
     let honggfuzz_target = match env::var("CARGO_HONGGFUZZ_TARGET_DIR") {
@@ -75,7 +74,7 @@ fn main() -> anyhow::Result<()> {
             "-C honggfuzz honggfuzz libhfuzz/libhfuzz.a libhfcommon/libhfcommon.a"
                 .split_ascii_whitespace(),
         )
-        .current_dir(cwd.parent().unwrap()),
+        .current_dir(manifest_dir),
     )?;
 
     use fs_err as fs;
